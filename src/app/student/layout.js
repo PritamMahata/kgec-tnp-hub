@@ -17,13 +17,14 @@ const NAV = [
 
 export default async function StudentLayout({ children }) {
   const session = await getSession();
+  if (!session) redirect('/login');
   if (!session || session.role !== 'student') redirect('/login');
-  const student = getStudentById(session.studentId);
+  const student = await getStudentById(session.studentId);
   if (!student) redirect('/login');
 
   // Urgent-action badge count for the Action Center nav item.
-  const jobs = getJobs();
-  const apps = getApplicationsByStudent(student.id);
+  const jobs = await getJobs();
+  const apps = await getApplicationsByStudent(student.id);
   const appliedIds = new Set(apps.map((a) => a.job.id));
   let urgentCount = 0;
   jobs.forEach((j) => {

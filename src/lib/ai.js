@@ -27,40 +27,47 @@ Rules:
 - Output valid JSON and nothing else.`;
 
 export async function parseNoticeWithAI(rawText) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not set. Add it to .env to enable the AI notice parser.');
+    throw new Error('GEMINI_API_KEY is not set. Add it to .env to enable the AI notice parser.');
   }
-  const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model,
-      max_tokens: 1200,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: rawText }]
+      systemInstruction: {
+        parts: [{ text: SYSTEM_PROMPT }]
+      },
+      contents: [
+        { role: 'user', parts: [{ text: rawText }] }
+      ],
+      generationConfig: {
+        responseMimeType: 'application/json'
+      }
     })
   });
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw new Error(`Anthropic API error (${res.status}): ${detail.slice(0, 300)}`);
+    throw new Error(`Gemini API error (${res.status}): ${detail.slice(0, 300)}`);
   }
 
   const data = await res.json();
-  const text = (data.content || [])
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n')
-    .trim();
+  
+  let text = '';
+  try {
+    text = data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    throw new Error('Unexpected response structure from Gemini API.');
+  }
 
-  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
   let parsed;
   try {

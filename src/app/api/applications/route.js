@@ -9,8 +9,8 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
   const { jobId } = await req.json();
-  const job = getJobById(jobId);
-  const student = getStudentById(session.studentId);
+  const job = await getJobById(jobId);
+  const student = await getStudentById(session.studentId);
   if (!job || !student) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
 
   if (urgencyOf(job.deadline) === 'expired') {
@@ -20,6 +20,6 @@ export async function POST(req) {
     return NextResponse.json({ error: "You don't meet the eligibility criteria for this drive." }, { status: 400 });
   }
 
-  const application = createApplication(student.id, job.id);
+  const application = await createApplication(student.id, job.id);
   return NextResponse.json({ ok: true, application });
 }

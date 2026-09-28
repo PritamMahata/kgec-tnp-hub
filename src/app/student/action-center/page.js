@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { getStudentById, getJobs, getApplicationsByStudent } from '@/lib/db';
 import { isEligible, urgencyOf } from '@/lib/eligibility';
@@ -7,9 +8,10 @@ import UpdatesPanel from '@/components/UpdatesPanel';
 
 export default async function ActionCenterPage() {
   const session = await getSession();
-  const student = getStudentById(session.studentId);
-  const jobs = getJobs();
-  const apps = getApplicationsByStudent(student.id);
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
+  const jobs = await getJobs();
+  const apps = await getApplicationsByStudent(student.id);
   const appliedIds = new Set(apps.map((a) => a.job.id));
 
   const urgent = [];

@@ -4,10 +4,10 @@ import JobPicker from '@/components/JobPicker';
 
 export default async function StudentsPage(props) {
   const searchParams = await props.searchParams;
-  const jobs = getJobs();
+  const jobs = await getJobs();
   const selectedId = searchParams.job || jobs[0]?.id;
-  const job = getJobById(selectedId);
-  const students = getAllStudents().filter((s) => !s.isDemo);
+  const job = selectedId ? await getJobById(selectedId) : null;
+  const students = (await getAllStudents()).filter((s) => !s.isDemo);
 
   const results = students.map((s) => ({ s, eligible: job ? isEligible(job, s) : false }));
   const eligibleCount = results.filter((r) => r.eligible).length;

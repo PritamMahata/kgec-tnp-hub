@@ -12,7 +12,7 @@ export async function POST(req, props) {
   if (!body.name || !body.name.trim()) {
     return NextResponse.json({ error: 'Round name is required.' }, { status: 400 });
   }
-  const job = addRound(params.id, {
+  const job = await addRound(params.id, {
     name: body.name.trim(),
     date: body.date ? new Date(body.date).toISOString() : null,
     venue: body.venue || null

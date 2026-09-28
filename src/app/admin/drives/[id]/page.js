@@ -2,15 +2,15 @@ import { notFound } from 'next/navigation';
 import { getJobById, getApplicantsForJob, getEligibleCountForJob } from '@/lib/db';
 import { statusLabel, urgencyOf } from '@/lib/eligibility';
 import { fmtDate, fmtDateTime } from '@/lib/format';
-import { CorrectionForm, DocumentUpload, AddRoundForm, ApplicantStatusSelect } from '@/components/AdminDriveWidgets';
+import { CorrectionForm, DocumentUpload, AddRoundForm, ApplicantStatusSelect, RemoveDocumentButton } from '@/components/AdminDriveWidgets';
 
 export default async function AdminDriveDetail(props) {
   const params = await props.params;
-  const job = getJobById(params.id);
+  const job = await getJobById(params.id);
   if (!job) notFound();
 
-  const applicants = getApplicantsForJob(job.id);
-  const eligibility = getEligibleCountForJob(job);
+  const applicants = await getApplicantsForJob(job.id);
+  const eligibility = await getEligibleCountForJob(job);
   const urg = urgencyOf(job.deadline);
 
   return (
@@ -98,9 +98,12 @@ export default async function AdminDriveDetail(props) {
             {job.documents.map((d) => (
               <div className="doc-item" key={d.id}>
                 <span>📄 {d.filename}</span>
-                <a className="btn secondary small" href={d.url} target="_blank" rel="noreferrer">
-                  Open
-                </a>
+                <div>
+                  <a className="btn secondary small" href={d.url} target="_blank" rel="noreferrer">
+                    Open
+                  </a>
+                  <RemoveDocumentButton jobId={job.id} documentId={d.id} />
+                </div>
               </div>
             ))}
           </div>

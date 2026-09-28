@@ -8,13 +8,14 @@ import ApplyButton from '@/components/ApplyButton';
 export default async function OpportunityDetail(props) {
   const params = await props.params;
   const session = await getSession();
-  const student = getStudentById(session.studentId);
-  const job = getJobById(params.id);
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
+  const job = await getJobById(params.id);
   if (!job) notFound();
 
   const checks = checkEligibility(job, student);
   const eligible = checks.every((c) => c.pass);
-  const application = getApplication(student.id, job.id);
+  const application = await getApplication(student.id, job.id);
   const urg = urgencyOf(job.deadline);
 
   return (

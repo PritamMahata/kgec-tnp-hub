@@ -1,10 +1,12 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { getStudentById } from '@/lib/db';
 import ProfileForm from '@/components/ProfileForm';
 
 export default async function ProfilePage() {
   const session = await getSession();
-  const student = getStudentById(session.studentId);
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
 
   return (
     <>

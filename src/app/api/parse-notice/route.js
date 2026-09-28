@@ -15,7 +15,7 @@ export async function POST(req) {
 
   try {
     const parsed = await parseNoticeWithAI(rawText);
-    const draft = createNoticeDraft(rawText, parsed);
+    const draft = await createNoticeDraft(rawText, parsed);
     return NextResponse.json({ ok: true, draftId: draft.id, parsed });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

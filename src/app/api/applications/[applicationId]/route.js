@@ -22,6 +22,6 @@ export async function PATCH(req, props) {
   const { status } = await req.json();
   if (!status) return NextResponse.json({ error: 'Status required.' }, { status: 400 });
 
-  const application = updateApplicationById(params.applicationId, status, NOTES[status] || statusLabel(status));
+  const application = await updateApplicationById(params.applicationId, status, NOTES[status] || statusLabel(status));
   return NextResponse.json({ ok: true, application });
 }

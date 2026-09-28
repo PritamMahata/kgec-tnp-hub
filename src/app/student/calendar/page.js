@@ -1,15 +1,20 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { getStudentById, getJobs, getApplication } from '@/lib/db';
+import { getStudentById, getJobs, getApplicationsByStudent } from '@/lib/db';
 import { urgencyOf } from '@/lib/eligibility';
 
 export default async function CalendarPage() {
   const session = await getSession();
-  const student = getStudentById(session.studentId);
-  const jobs = getJobs();
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
+  const jobs = await getJobs();
+
+  const apps = await getApplicationsByStudent(student.id);
+  const appliedIds = new Set(apps.map((a) => a.job.id));
 
   const items = [];
   jobs.forEach((job) => {
-    const applied = !!getApplication(student.id, job.id);
+    const applied = appliedIds.has(job.id);
     if (!applied && urgencyOf(job.deadline) !== 'expired') {
       items.push({ date: job.deadline, label: `${job.company} — registration closes` });
     }

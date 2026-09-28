@@ -13,7 +13,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Company, role, at least one branch, and a deadline are required.' }, { status: 400 });
   }
 
-  const job = createJob({
+  const job = await createJob({
     company: body.company.trim(),
     role: body.role.trim(),
     type: body.type || 'Placement',

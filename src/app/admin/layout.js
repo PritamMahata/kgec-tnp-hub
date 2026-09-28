@@ -12,6 +12,7 @@ const NAV = [
 
 export default async function AdminLayout({ children }) {
   const session = await getSession();
+  if (!session) redirect('/login');
   if (!session || session.role !== 'admin') redirect('/login');
 
   return (

@@ -3,11 +3,15 @@ import { getJobs, getApplicationStatsForJob, getEligibleCountForJob } from '@/li
 import { urgencyOf } from '@/lib/eligibility';
 import { fmtDateTime } from '@/lib/format';
 
-export default function AdminDashboard() {
-  const jobs = getJobs();
+export default async function AdminDashboard() {
+  const jobs = await getJobs();
   const active = jobs.filter((j) => urgencyOf(j.deadline) !== 'expired').length;
 
-  const stats = jobs.map((j) => ({ job: j, ...getApplicationStatsForJob(j.id), eligible: getEligibleCountForJob(j).total }));
+  const stats = await Promise.all(jobs.map(async (j) => {
+    const appStats = await getApplicationStatsForJob(j.id);
+    const eligibleCount = await getEligibleCountForJob(j);
+    return { job: j, ...appStats, eligible: eligibleCount.total };
+  }));
   const totalApps = stats.reduce((s, x) => s + x.registered, 0);
   const totalShortlist = stats.reduce((s, x) => s + x.shortlisted, 0);
   const totalSelected = stats.reduce((s, x) => s + x.selected, 0);

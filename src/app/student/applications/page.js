@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { getStudentById, getApplicationsByStudent } from '@/lib/db';
 import { PIPELINE_STAGES, statusLabel } from '@/lib/eligibility';
@@ -30,8 +31,9 @@ function Pipeline({ status }) {
 
 export default async function ApplicationsPage() {
   const session = await getSession();
-  const student = getStudentById(session.studentId);
-  const apps = getApplicationsByStudent(student.id);
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
+  const apps = await getApplicationsByStudent(student.id);
 
   return (
     <>

@@ -170,3 +170,31 @@ export function ApplicantStatusSelect({ applicationId, status }) {
     </select>
   );
 }
+
+export function RemoveDocumentButton({ jobId, documentId }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function remove() {
+    if (!confirm('Are you sure you want to remove this document?')) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/documents/${documentId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+      router.refresh();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button className="btn secondary small" onClick={remove} disabled={busy} style={{ marginLeft: 8 }}>
+      {busy ? 'Removing…' : 'Remove'}
+    </button>
+  );
+}

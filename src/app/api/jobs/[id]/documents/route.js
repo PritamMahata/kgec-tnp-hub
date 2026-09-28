@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { getSession } from '@/lib/session';
 import { addDocument, getJobById } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
 
-// Files are written under UPLOAD_DIR (defaults to ./public/uploads), so the
-// resulting /uploads/... URL is served directly by Next's static file
-// handling. On a serverless host with a read-only/ephemeral filesystem this
-// won't persist — swap in S3/R2/etc. here for that kind of deployment (see
-// .env.example).
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './public/uploads';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export async function POST(req, props) {
   const params = await props.params;
@@ -17,7 +14,7 @@ export async function POST(req, props) {
   if (!session || session.role !== 'admin') {
     return NextResponse.json({ error: 'Not signed in as TNP Office.' }, { status: 401 });
   }
-  const job = getJobById(params.id);
+  const job = await getJobById(params.id);
   if (!job) return NextResponse.json({ error: 'Drive not found.' }, { status: 404 });
 
   const form = await req.formData();
@@ -30,14 +27,21 @@ export async function POST(req, props) {
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-  const jobDir = path.join(/*turbopackIgnore: true*/ process.cwd(), UPLOAD_DIR.replace(/^\.\//, ''), job.id);
-  await mkdir(jobDir, { recursive: true });
-  const destPath = path.join(jobDir, `${Date.now()}-${safeName}`);
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(destPath, bytes);
+  const filePath = `jobs/${job.id}/${Date.now()}-${safeName}`;
+  const bytes = await file.arrayBuffer();
+  
+  const { error: uploadError } = await supabase.storage
+    .from('uploads')
+    .upload(filePath, bytes, { contentType: file.type || 'application/octet-stream' });
+    
+  if (uploadError) {
+    return NextResponse.json({ error: 'Failed to upload to Supabase: ' + uploadError.message }, { status: 500 });
+  }
 
-  const publicUrl = '/uploads/' + path.relative(path.join(process.cwd(), 'public/uploads'), destPath).split(path.sep).join('/');
+  const { data: publicUrlData } = supabase.storage
+    .from('uploads')
+    .getPublicUrl(filePath);
 
-  const updatedJob = addDocument(job.id, { filename: file.name, url: publicUrl });
+  const updatedJob = await addDocument(job.id, { filename: file.name, url: publicUrlData.publicUrl });
   return NextResponse.json({ ok: true, job: updatedJob });
 }

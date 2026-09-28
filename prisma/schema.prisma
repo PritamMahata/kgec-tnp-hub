@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Student {
+  id           String        @id @default(uuid())
+  email        String?       @unique
+  name         String
+  roll         String        @unique
+  batch        String
+  branch       String
+  cgpa         Float
+  tenth        Float
+  twelfth      Float
+  backlog      Boolean       @default(false)
+  isDemo       Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  course       String        @default("BTECH")
+  mobile       String        @default("")
+  cvUrl        String?
+  cvFilename   String?
+  applications Application[]
+}
+
+model Company {
+  id   String @id @default(uuid())
+  name String @unique
+  jobs Job[]
+}
+
+model Job {
+  id             String        @id @default(uuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id])
+  role           String
+  type           String
+  batch          String
+  branches       String
+  minCgpa        Float
+  min10          Float
+  min12          Float
+  backlogAllowed Boolean       @default(false)
+  package        String
+  location       String
+  deadline       String
+  status         String        @default("open")
+  version        Int           @default(1)
+  createdAt      DateTime      @default(now())
+  rounds         Round[]
+  documents      Document[]
+  changelogs     Changelog[]
+  applications   Application[]
+}
+
+model Round {
+  id      String  @id @default(uuid())
+  jobId   String
+  job     Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name    String
+  date    String?
+  venue   String?
+  order   Int     @default(0)
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  jobId      String
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  filename   String
+  url        String
+  uploadedAt DateTime @default(now())
+}
+
+model Changelog {
+  id    String   @id @default(uuid())
+  jobId String
+  job   Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  text  String
+  date  DateTime @default(now())
+}
+
+model Application {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  status    String   @default("APPLIED")
+  note      String?
+  updatedAt DateTime @default(now())
+
+  @@unique([studentId, jobId])
+}
+
+model NoticeDraft {
+  id        String   @id @default(uuid())
+  rawText   String
+  parsed    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}

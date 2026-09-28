@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil'];
+const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil', 'MCA'];
 
 const EMPTY = {
   company: '',
@@ -30,16 +30,33 @@ function toLocalDatetimeInput(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function CreateDriveForm() {
+export default function CreateDriveForm({ initialData }) {
   const router = useRouter();
   const [rawText, setRawText] = useState('');
   const [extracting, setExtracting] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiNotes, setAiNotes] = useState(null);
 
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(initialData ? {
+    id: initialData.id,
+    company: initialData.company || '',
+    role: initialData.role || '',
+    type: initialData.type || 'Placement',
+    batch: initialData.batch || '2027',
+    branches: initialData.branchList || [],
+    minCgpa: String(initialData.minCgpa ?? 7.0),
+    min10: String(initialData.min10 ?? 70),
+    min12: String(initialData.min12 ?? 70),
+    backlogAllowed: !!initialData.backlogAllowed,
+    package: initialData.package || '',
+    location: initialData.location || '',
+    deadline: toLocalDatetimeInput(initialData.deadline) || '',
+    rounds: initialData.rounds ? initialData.rounds.map(r => ({ name: r.name, date: toLocalDatetimeInput(r.date), venue: r.venue || '' })) : [],
+    requirements: []
+  } : EMPTY);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const isEditing = !!initialData;
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -115,8 +132,8 @@ export default function CreateDriveForm() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
+      const res = await fetch(isEditing ? `/api/jobs/${form.id}` : '/api/jobs', {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
@@ -130,7 +147,7 @@ export default function CreateDriveForm() {
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not publish drive.');
+      if (!res.ok) throw new Error(data.error || (isEditing ? 'Could not update drive.' : 'Could not publish drive.'));
       router.push(`/admin/drives/${data.job.id}`);
       router.refresh();
     } catch (err) {
@@ -142,30 +159,32 @@ export default function CreateDriveForm() {
 
   return (
     <>
-      <div className="ai-box">
-        <h3>Extract from a notice with AI</h3>
-        <p>
-          Paste the WhatsApp forward or notice text below. The model drafts the fields underneath — nothing is published
-          until you review and click Publish.
-        </p>
-        <textarea
-          rows={6}
-          style={{ width: '100%', marginBottom: 10 }}
-          placeholder="Paste the recruitment notice text here…"
-          value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
-        />
-        <button type="button" className="btn" onClick={extract} disabled={extracting || !rawText.trim()}>
-          {extracting ? 'Extracting…' : 'Extract with AI'}
-        </button>
-        {aiError && <div className="error-banner" style={{ marginTop: 10 }}>{aiError}</div>}
-        {aiNotes && (
-          <div className="success-banner" style={{ marginTop: 10 }}>
-            Extracted with <b>{aiNotes.confidence}</b> confidence — check the fields below before publishing.
-            {aiNotes.notes ? ` ${aiNotes.notes}` : ''}
-          </div>
-        )}
-      </div>
+      {!isEditing && (
+        <div className="ai-box">
+          <h3>Extract from a notice with AI</h3>
+          <p>
+            Paste the WhatsApp forward or notice text below. The model drafts the fields underneath — nothing is published
+            until you review and click Publish.
+          </p>
+          <textarea
+            rows={6}
+            style={{ width: '100%', marginBottom: 10 }}
+            placeholder="Paste the recruitment notice text here…"
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+          />
+          <button type="button" className="btn" onClick={extract} disabled={extracting || !rawText.trim()}>
+            {extracting ? 'Extracting…' : 'Extract with AI'}
+          </button>
+          {aiError && <div className="error-banner" style={{ marginTop: 10 }}>{aiError}</div>}
+          {aiNotes && (
+            <div className="success-banner" style={{ marginTop: 10 }}>
+              Extracted with <b>{aiNotes.confidence}</b> confidence — check the fields below before publishing.
+              {aiNotes.notes ? ` ${aiNotes.notes}` : ''}
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={submit}>
         {submitError && <div className="error-banner">{submitError}</div>}
@@ -264,7 +283,7 @@ export default function CreateDriveForm() {
 
         <div style={{ marginTop: 20 }}>
           <button className="btn" type="submit" disabled={submitting}>
-            {submitting ? 'Publishing…' : 'Publish drive'}
+            {submitting ? (isEditing ? 'Saving…' : 'Publishing…') : (isEditing ? 'Save changes' : 'Publish drive')}
           </button>
         </div>
       </form>

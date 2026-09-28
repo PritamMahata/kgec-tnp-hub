@@ -8,13 +8,13 @@ export async function PATCH(req) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
   const body = await req.json();
-  const allowed = ['name', 'roll', 'batch', 'branch', 'cgpa', 'tenth', 'twelfth', 'backlog'];
+  const allowed = ['name', 'roll', 'batch', 'branch', 'course', 'mobile', 'cgpa', 'tenth', 'twelfth', 'backlog'];
   const fields = {};
   for (const key of allowed) {
     if (key in body) {
       fields[key] = ['cgpa', 'tenth', 'twelfth'].includes(key) ? parseFloat(body[key]) : body[key];
     }
   }
-  const student = updateStudent(session.studentId, fields);
+  const student = await updateStudent(session.studentId, fields);
   return NextResponse.json({ ok: true, student });
 }

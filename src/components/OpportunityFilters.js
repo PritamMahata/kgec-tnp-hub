@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil'];
+const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil', 'MCA'];
 
 export default function OpportunityFilters({ branch, type, elig }) {
   const router = useRouter();

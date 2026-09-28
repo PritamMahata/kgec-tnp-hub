@@ -1,28 +1,33 @@
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { getStudentById, getJobs, getApplication } from '@/lib/db';
+import { getStudentById, getJobs, getApplicationsByStudent } from '@/lib/db';
 import { checkEligibility, isEligible, urgencyOf } from '@/lib/eligibility';
 import { fmtDateTime } from '@/lib/format';
 import ApplyButton from '@/components/ApplyButton';
 import OpportunityFilters from '@/components/OpportunityFilters';
 import Link from 'next/link';
 
-const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil'];
+const BRANCHES = ['CSE', 'IT', 'ECE', 'EE', 'ME', 'Civil', 'MCA'];
 
 export default async function OpportunitiesPage(props) {
   const searchParams = await props.searchParams;
   const session = await getSession();
-  const student = getStudentById(session.studentId);
+  if (!session) redirect('/login');
+  const student = await getStudentById(session.studentId);
   const branch = searchParams.branch || 'all';
   const type = searchParams.type || 'all';
   const elig = searchParams.elig || 'all';
 
-  let jobs = getJobs();
+  let jobs = await getJobs();
   jobs = jobs.filter((j) => {
     if (branch !== 'all' && !j.branchList.includes(branch)) return false;
     if (type !== 'all' && j.type !== type) return false;
     if (elig === 'eligible' && !isEligible(j, student)) return false;
     return true;
   });
+
+  const apps = await getApplicationsByStudent(student.id);
+  const appliedIds = new Set(apps.map(a => a.job.id));
 
   return (
     <>
@@ -36,7 +41,7 @@ export default async function OpportunitiesPage(props) {
       {jobs.map((job) => {
         const checks = checkEligibility(job, student);
         const eligible = checks.every((c) => c.pass);
-        const application = getApplication(student.id, job.id);
+        const application = appliedIds.has(job.id);
         const urg = urgencyOf(job.deadline);
         return (
           <div className="card" key={job.id}>

@@ -3,8 +3,12 @@ import { getJobs, getApplicationStatsForJob } from '@/lib/db';
 import { urgencyOf } from '@/lib/eligibility';
 import { fmtDateTime } from '@/lib/format';
 
-export default function DrivesPage() {
-  const jobs = getJobs();
+export default async function DrivesPage() {
+  const baseJobs = await getJobs();
+  const jobs = await Promise.all(baseJobs.map(async job => ({
+    ...job,
+    stats: await getApplicationStatsForJob(job.id)
+  })));
 
   return (
     <>
@@ -12,7 +16,7 @@ export default function DrivesPage() {
       <p className="page-sub">Every recruitment as one structured record — open a drive to advance stages, add a correction, or attach documents.</p>
 
       {jobs.map((job) => {
-        const stats = getApplicationStatsForJob(job.id);
+        const stats = job.stats;
         const urg = urgencyOf(job.deadline);
         return (
           <div className="card" key={job.id}>
@@ -29,9 +33,14 @@ export default function DrivesPage() {
                   {stats.selected} selected
                 </div>
               </div>
-              <Link href={`/admin/drives/${job.id}`} className="btn secondary small">
-                Manage
-              </Link>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Link href={`/admin/drives/${job.id}/edit`} className="btn secondary small">
+                  Edit
+                </Link>
+                <Link href={`/admin/drives/${job.id}`} className="btn secondary small">
+                  Manage
+                </Link>
+              </div>
             </div>
           </div>
         );

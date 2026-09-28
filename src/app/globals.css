@@ -179,6 +179,13 @@ table.data tr:last-child td { border-bottom: none; }
 .login-tabs button { flex: 1; border: none; background: transparent; color: var(--muted); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; padding: 9px 10px; cursor: pointer; }
 .login-tabs button.active { background: var(--ink); color: var(--paper); }
 
+.small-slider { display: inline-flex; background: var(--paper-sunken); border-radius: 999px; padding: 3px; margin-bottom: 20px; position: relative; min-width: 160px; }
+.small-slider button { position: relative; z-index: 2; flex: 1; border: none; background: transparent; color: var(--muted); font-family: inherit; font-size: 12px; font-weight: 600; padding: 6px 14px; cursor: pointer; border-radius: 999px; transition: color 0.2s; text-align: center; }
+.small-slider button.active { color: var(--ink); }
+.small-slider .slider-bg { position: absolute; top: 3px; bottom: 3px; width: calc(50% - 3px); background: var(--paper-raised); border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 1; }
+.small-slider[data-mode="login"] .slider-bg { transform: translateX(0); }
+.small-slider[data-mode="signup"] .slider-bg { transform: translateX(100%); }
+
 .ai-box { border: 1px solid var(--brass); background: var(--brass-tint); border-radius: 4px; padding: 16px; margin-bottom: 26px; }
 .ai-box h3 { font-family: 'Fraunces', serif; margin: 0 0 4px; font-size: 15px; }
 .ai-box p { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); }

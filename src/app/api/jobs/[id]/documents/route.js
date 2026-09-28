@@ -3,12 +3,13 @@ import { getSession } from '@/lib/session';
 import { addDocument, getJobById } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 export async function POST(req, props) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const params = await props.params;
   const session = await getSession();
   if (!session || session.role !== 'admin') {

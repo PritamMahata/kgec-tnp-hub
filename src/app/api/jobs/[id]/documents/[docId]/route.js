@@ -3,12 +3,13 @@ import { getSession } from '@/lib/session';
 import { deleteDocument, getJobById } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 export async function DELETE(req, props) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const params = await props.params;
   const session = await getSession();
   

@@ -3,12 +3,13 @@ import { getSession } from '@/lib/session';
 import { updateStudent, getStudentById } from '@/lib/db';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 export async function POST(req) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const session = await getSession();
   if (!session || session.role !== 'student') {
     return NextResponse.json({ error: 'Not signed in as a student.' }, { status: 401 });
